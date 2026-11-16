@@ -1,0 +1,37 @@
+name: Daily Betting Value Scanner (+EV)
+
+on:
+  schedule:
+    # Se ejecuta todos los días a las 08:00 UTC (09:00 AM hora de España peninsular en invierno)
+    - cron: '0 8 * * *'
+  workflow_dispatch: # Permite ejecutar el bot manualmente con un clic desde la web de GitHub
+
+jobs:
+  scan-and-notify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar código del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar entorno de Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Ejecutar escáner de valor y enviar a Telegram
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          MIN_EV: '0.0'
+          TARGET_BOOKMAKER: 'bet365'
+          TIMEZONE: 'Europe/Madrid'
+        run: |
+          python main.py
