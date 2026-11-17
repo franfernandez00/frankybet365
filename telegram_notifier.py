@@ -68,7 +68,7 @@ class TelegramNotifier:
                     f"📅 <i>{date_str}</i>\n\n"
                     f"🔍 <b>Partidos hoy:</b> 0 partidos en las ligas monitorizadas.\n"
                     f"ℹ️ <b>Resultado:</b> Hoy no hay encuentros programados en las competiciones seleccionadas (jornada de descanso o parón).\n\n"
-                    f"💡 <i>El bot volverá a escanear automáticamente mañana a las 09:00 AM.</i>"
+                    f"💡 <i>El bot volverá a escanear automáticamente mañana a las 12:00 PM.</i>"
                 )
             if api_remaining is not None:
                 msg += f"\n\n📊 <i>Consultas API restantes este mes: {api_remaining}/500</i>"

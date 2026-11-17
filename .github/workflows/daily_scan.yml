@@ -2,8 +2,8 @@ name: Daily Betting Value Scanner & Hourly Tracker (+EV)
 
 on:
   schedule:
-    # Escaneo diario a las 08:05 UTC (09:05 AM hora peninsular española)
-    - cron: '5 8 * * *'
+    # Escaneo diario principal a las 11:05 UTC (12:05 PM hora peninsular española)
+    - cron: '5 11 * * *'
     # Monitor horario opcional de seguimiento entre las 12:00 y las 20:00 UTC (13:00 a 21:00 CET)
     - cron: '0 12-20 * * *'
   workflow_dispatch:

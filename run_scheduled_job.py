@@ -29,9 +29,9 @@ def run_job(mode: str = "auto", dry_run: bool = False):
         monitor_active_picks(dry_run=dry_run)
     else:
         # Modo 'auto'
-        # 8 UTC corresponde a las 09:00 AM peninsular española (horario estándar de invierno)
-        if current_utc_hour == 8:
-            logging.info("Hora 08:00 UTC detectada (09:00 AM España). Ejecutando escaneo principal de ligas...")
+        # 11 UTC corresponde a las 12:00 PM peninsular española (horario estándar de invierno)
+        if current_utc_hour == 11:
+            logging.info("Hora 11:00 UTC detectada (12:00 PM España). Ejecutando escaneo principal de ligas...")
             run_pipeline(dry_run=dry_run)
         else:
             logging.info(f"Hora {current_utc_hour:02d}:00 UTC detectada. Ejecutando monitor de cuotas...")
