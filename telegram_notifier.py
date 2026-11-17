@@ -48,16 +48,28 @@ class TelegramNotifier:
                             total_matches_reviewed: int,
                             api_remaining: Optional[int] = None) -> str:
         """
-        Genera el mensaje estilizado en HTML con todos los picks ordenados por EV.
+        Genera el mensaje estilizado en HTML con todos los picks ordenados por EV,
+        o una notificación clara cuando no se detecta valor o no hay partidos hoy.
         """
         if not picks:
-            msg = (
-                f"⚽ <b>INFORME MATINAL DE VALOR ESPERADO (+EV)</b>\n"
-                f"📅 <i>{date_str}</i>\n\n"
-                f"🔍 <b>Partidos analizados hoy:</b> {total_matches_reviewed}\n"
-                f"ℹ️ <b>Resultado:</b> No se han detectado picks con valor matemático real (+EV) en las ligas analizadas.\n\n"
-                f"💡 <i>Las cuotas del mercado están ajustadas al milímetro con respecto a Pinnacle. No forzar apuestas cuando no hay ventaja matemática es la clave de la rentabilidad a largo plazo.</i>"
-            )
+            if total_matches_reviewed > 0:
+                msg = (
+                    f"⚽ <b>INFORME MATINAL DE VALOR ESPERADO (+EV)</b>\n"
+                    f"📅 <i>{date_str}</i>\n\n"
+                    f"🔍 <b>Partidos analizados hoy:</b> {total_matches_reviewed}\n"
+                    f"ℹ️ <b>Resultado:</b> <b>Sin apuestas con valor positivo hoy.</b>\n\n"
+                    f"📊 Se han cruzado las cuotas de Bet365 y el mercado contra el desmargen de Pinnacle, "
+                    f"y ningún partido ofrece margen a nuestro favor.\n\n"
+                    f"💡 <i>La regla de oro para ganar a largo plazo es la disciplina: no forzar apuestas cuando el mercado está bien ajustado. ¡Paciencia y a esperar la siguiente jornada!</i>"
+                )
+            else:
+                msg = (
+                    f"⚽ <b>INFORME MATINAL DE VALOR ESPERADO (+EV)</b>\n"
+                    f"📅 <i>{date_str}</i>\n\n"
+                    f"🔍 <b>Partidos hoy:</b> 0 partidos en las ligas monitorizadas.\n"
+                    f"ℹ️ <b>Resultado:</b> Hoy no hay encuentros programados en las competiciones seleccionadas (jornada de descanso o parón).\n\n"
+                    f"💡 <i>El bot volverá a escanear automáticamente mañana a las 09:00 AM.</i>"
+                )
             if api_remaining is not None:
                 msg += f"\n\n📊 <i>Consultas API restantes este mes: {api_remaining}/500</i>"
             return msg
@@ -108,3 +120,37 @@ class TelegramNotifier:
             lines.append(f"📡 <i>Consultas The Odds API restantes: {api_remaining}/500</i>")
 
         return "\n".join(lines)
+
+    def format_odd_alert(self, 
+                         pick: Dict[str, Any], 
+                         current_odd: float, 
+                         bookmaker_name: str,
+                         date_str: str) -> str:
+        """
+        Genera el mensaje de alerta urgente cuando una cuota alcanza o supera el objetivo recomendado.
+        """
+        home = pick.get('home_team', '')
+        away = pick.get('away_team', '')
+        league = pick.get('league_name', 'Fútbol')
+        time_str = pick.get('local_time_formatted', '')
+        selection = pick.get('selection', '')
+        target_odd = pick.get('target_odd', 0.0)
+        fair_odd = pick.get('fair_odd', 0.0)
+        
+        current_ev = 0.0
+        if fair_odd > 0:
+            current_ev = round(((1.0 / fair_odd) * current_odd - 1.0) * 100.0, 2)
+
+        return (
+            f"🚨 <b>¡ALERTA DE CUOTA ALCANZADA!</b>\n"
+            f"📅 <i>{date_str}</i>\n"
+            f"━━━━━━━━━━━━━━━━━━━\n"
+            f"⚽ <b>{home} vs {away}</b>\n"
+            f"🏆 <i>{league}</i> {f'• ⏰ <b>{time_str}h</b>' if time_str else ''}\n"
+            f"📌 <b>Selección:</b> <code>{selection}</code>\n\n"
+            f"🎯 <b>Cuota objetivo recomendada:</b> <b>{target_odd}</b>\n"
+            f"🔥 <b>Cuota detectada en mercado:</b> <b>{current_odd}</b> en <i>{bookmaker_name}</i>\n"
+            f"📈 <b>Valor actual (+EV):</b> <b>+{current_ev}%</b>\n"
+            f"⚖️ <b>Cuota Justa (Pinnacle sin margen):</b> {fair_odd}\n\n"
+            f"💡 <i>¡Momento idóneo para entrar en Bet365 y realizar la apuesta antes del inicio!</i>"
+        )

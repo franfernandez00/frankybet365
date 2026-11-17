@@ -46,12 +46,17 @@ MARKETS = "h2h"  # 1X2
 # Diccionario de ligas a analizar con sus nombres legibles
 LEAGUES = {
     "soccer_spain_la_liga": "🇪🇸 LaLiga EA Sports",
-    "soccer_spain_segunda_division": "🇪🇸 LaLiga Hypermotion",
     "soccer_epl": "🇬🇧 Premier League",
     "soccer_italy_serie_a": "🇮🇹 Serie A",
     "soccer_germany_bundesliga": "🇩🇪 Bundesliga",
     "soccer_france_ligue_one": "🇫🇷 Ligue 1",
-    "soccer_efl_champ": "🇬🇧 Championship",
     "soccer_netherlands_eredivisie": "🇳🇱 Eredivisie",
     "soccer_portugal_primeira_liga": "🇵🇹 Liga Portugal",
+    "soccer_denmark_superliga": "🇩🇰 Dinamarca - Superliga",
+    "soccer_norway_eliteserien": "🇳🇴 Noruega - Eliteserien",
+    "soccer_belgium_first_div": "🇧🇪 Bélgica - Pro League",
+    "soccer_turkey_super_league": "🇹🇷 Turquía - Süper Lig",
+    "soccer_spl": "🏴󠁧󠁢󠁳󠁣󠁴󠁿 Escocia - Premiership",
+    "soccer_switzerland_superleague": "🇨🇭 Suiza - Super League",
+    "soccer_sweden_allsvenskan": "🇸🇪 Suecia - Allsvenskan",
 }

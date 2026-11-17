@@ -114,5 +114,96 @@ class TestBettingBot(unittest.TestCase):
         self.assertIn("Real Madrid vs Barcelona", text)
         self.assertIn("+6.35%", text)
 
+    def test_configured_leagues(self):
+        import config
+        expected_keys = [
+            "soccer_belgium_first_div",
+            "soccer_turkey_super_league",
+            "soccer_spl",
+            "soccer_switzerland_superleague",
+            "soccer_sweden_allsvenskan",
+            "soccer_denmark_superliga",
+            "soccer_norway_eliteserien"
+        ]
+        for key in expected_keys:
+            self.assertIn(key, config.LEAGUES)
+            self.assertTrue(len(config.LEAGUES[key]) > 0)
+
+        # Verificar que el total de ligas configuradas es exactamente 14
+        self.assertEqual(len(config.LEAGUES), 14)
+
+        # Verificar que Australia, Brasil, EEUU y las segundas divisiones fueron retiradas
+        removed_keys = [
+            "soccer_australia_aleague",
+            "soccer_brazil_campeonato",
+            "soccer_usa_mls",
+            "soccer_spain_segunda_division",
+            "soccer_efl_champ"
+        ]
+        for key in removed_keys:
+            self.assertNotIn(key, config.LEAGUES)
+
+    def test_format_odd_alert(self):
+        notifier = TelegramNotifier("fake_token", "123456789")
+        pick = {
+            "home_team": "Real Madrid",
+            "away_team": "Barcelona",
+            "league_name": "🇪🇸 LaLiga EA Sports",
+            "local_time_formatted": "21:00",
+            "selection": "Real Madrid (1)",
+            "target_odd": 2.20,
+            "fair_odd": 2.10
+        }
+        msg = notifier.format_odd_alert(pick, current_odd=2.25, bookmaker_name="William Hill", date_str="16/11/2026")
+        self.assertIn("ALERTA DE CUOTA ALCANZADA", msg)
+        self.assertIn("Real Madrid vs Barcelona", msg)
+        self.assertIn("2.25", msg)
+        self.assertIn("William Hill", msg)
+
+    def test_picks_tracker_functions(self):
+        import tempfile
+        import os
+        from picks_tracker import (
+            is_match_live_or_finished,
+            save_picks_to_state,
+            load_picks_state
+        )
+        from datetime import datetime, timezone, timedelta
+
+        # 1. Comprobar partidos futuros vs pasados
+        future_iso = (datetime.now(timezone.utc) + timedelta(hours=2)).isoformat()
+        past_iso = (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat()
+        self.assertFalse(is_match_live_or_finished(future_iso))
+        self.assertTrue(is_match_live_or_finished(past_iso))
+
+        # 2. Guardar y cargar estado
+        with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as tmp:
+            tmp_path = tmp.name
+
+        try:
+            sample_picks = [{
+                "match_id": "m123",
+                "sport_key": "soccer_spain_la_liga",
+                "league_name": "🇪🇸 LaLiga EA Sports",
+                "home_team": "Sevilla",
+                "away_team": "Betis",
+                "commence_time": future_iso,
+                "selection": "Sevilla (1)",
+                "selection_key": "home",
+                "offered_odd": 2.30,
+                "fair_odd": 2.15,
+                "bookmaker": "William Hill"
+            }]
+            save_picks_to_state(sample_picks, filepath=tmp_path)
+            loaded = load_picks_state(filepath=tmp_path)
+            self.assertEqual(len(loaded), 1)
+            self.assertEqual(loaded[0]["match_id"], "m123")
+            self.assertEqual(loaded[0]["target_odd"], 2.30)
+            self.assertEqual(loaded[0]["status"], "pending")
+            self.assertFalse(loaded[0]["alerted"])
+        finally:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+
 if __name__ == '__main__':
     unittest.main()

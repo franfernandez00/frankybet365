@@ -60,7 +60,7 @@ def detect_and_save_chat_id():
                         test_text = (
                             f"👋 ¡Hola {first_name}!\n\n"
                             f"🤖 <b>Bot de Apuestas (+EV) conectado con éxito.</b>\n"
-                            f"A partir de mañana a las 09:00 AM recibirás aquí los mejores picks con valor detectados."
+                            f"A partir de mañana a las 12:00 PM recibirás aquí los mejores picks con valor detectados."
                         )
                         requests.post(send_url, json={"chat_id": chat_id, "text": test_text, "parse_mode": "HTML"})
                         print("🚀 ¡Mensaje de confirmación enviado a tu Telegram!")

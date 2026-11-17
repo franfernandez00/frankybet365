@@ -8,6 +8,7 @@ import config
 from odds_client import OddsClient
 from ev_calculator import find_positive_ev_picks
 from telegram_notifier import TelegramNotifier
+from picks_tracker import save_picks_to_state
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 
@@ -72,6 +73,7 @@ def run_pipeline(dry_run: bool = False, specific_league: str = None):
             
             for p in match_picks:
                 p['league_name'] = league_name
+                p['sport_key'] = sport_key
                 p['local_time_formatted'] = match.get('local_time_formatted', '')
                 all_picks.append(p)
 
@@ -104,6 +106,10 @@ def run_pipeline(dry_run: bool = False, specific_league: str = None):
         logging.info("Modo --dry-run activo. No se envía mensaje a Telegram.")
         return
 
+    # Guardar picks activos para la monitorización horaria hasta el inicio de los partidos
+    save_picks_to_state(unique_picks)
+    logging.info(f"Picks guardados en active_picks.json para seguimiento horario.")
+
     if config.TELEGRAM_BOT_TOKEN and config.TELEGRAM_CHAT_ID:
         logging.info("Enviando reporte a Telegram...")
         success = notifier.send_message(report_text)
@@ -117,7 +123,7 @@ def run_pipeline(dry_run: bool = False, specific_league: str = None):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Bot de Apuestas de Valor (+EV)")
     parser.add_argument("--dry-run", action="store_true", help="Ejecuta el escáner sin enviar mensaje a Telegram")
-    parser.add_argument("--league", type=str, default=None, help="Escanear solo una liga específica (ej: soccer_spain_segunda_division)")
+    parser.add_argument("--league", type=str, default=None, help="Escanear solo una liga específica (ej: soccer_spain_la_liga)")
     args = parser.parse_args()
 
     run_pipeline(dry_run=args.dry_run, specific_league=args.league)

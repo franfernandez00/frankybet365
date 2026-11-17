@@ -2,7 +2,9 @@
 
 Sistema autónomo desarrollado en Python para escanear partidos de fútbol diarios, calcular la probabilidad real del mercado mediante el desmargen de **Pinnacle** (la casa de apuestas más eficiente del mundo) y detectar valor esperado positivo (**+EV**) para apostar en **Bet365** y casas recreativas.
 
-El bot se ejecuta automáticamente cada mañana a las **09:00 AM (hora de España peninsular)** mediante **GitHub Actions** y envía los resultados directamente a tu móvil por **Telegram**.
+El bot se ejecuta automáticamente todos los días entre las **12:00 PM y las 21:00 horas (hora de España peninsular)** mediante **GitHub Actions**:
+1. **A las 12:00 PM:** Escaneo completo de las 14 ligas y envío del informe general a **Telegram**.
+2. **De 13:00 a 21:00 horas (cada hora):** Monitorización ligera de cuotas para los picks activos hasta la hora de inicio de cada partido, enviando alertas inmediatas en cuanto una cuota alcanza el objetivo recomendado.
 
 ---
 
@@ -10,25 +12,38 @@ El bot se ejecuta automáticamente cada mañana a las **09:00 AM (hora de Españ
 
 ```mermaid
 flowchart TD
-    Cron[GitHub Actions - 09:00 AM CET] --> Main[main.py]
-    Main --> Odds[The Odds API - 9 Ligas Europeas]
-    Odds --> Filter[Filtro de Partidos de Hoy]
-    Filter --> Devig[Desmargen de Pinnacle - Cuota Justa Fair Odd]
-    Devig --> EV[Calculadora de EV: P_fair * Cuota - 1]
-    EV --> Rank[Ordenación de Mayor a Menor EV]
-    Rank --> Telegram[Bot de Telegram @frankybet365bot]
+    Cron[GitHub Actions - 12:00 a 21:00 CET] --> Scheduler[run_scheduled_job.py]
+    Scheduler -->|12:00 PM| Main[main.py: Escáner Diario 14 Ligas]
+    Main --> Odds[The Odds API - 14 Ligas]
+    Odds --> Filter[Filtro Partidos de Hoy]
+    Filter --> Devig[Desmargen Pinnacle - Cuota Justa]
+    Devig --> EV[Calculadora +EV]
+    EV --> Telegram[Informe Diario en Telegram]
+    EV --> State[(active_picks.json)]
+
+    Scheduler -->|13:00 a 21:00| Monitor[monitor_picks.py: Monitor Horario]
+    State --> Monitor
+    Monitor -->|Solo ligas de picks activos| CheckOdds[Consulta Cuotas Mercado]
+    CheckOdds --> Threshold{¿Cuota >= Objetivo?}
+    Threshold -->|Sí| Alert[🚨 Alerta Urgente en Telegram]
+    Threshold -->|No| Wait[Esperar siguiente hora]
 ```
 
 ### 1. Ligas Analizadas
 1. 🇪🇸 LaLiga EA Sports (`soccer_spain_la_liga`)
-2. 🇪🇸 LaLiga Hypermotion (`soccer_spain_segunda_division`)
-3. 🇬🇧 Premier League (`soccer_epl`)
-4. 🇮🇹 Serie A (`soccer_italy_serie_a`)
-5. 🇩🇪 Bundesliga (`soccer_germany_bundesliga`)
-6. 🇫🇷 Ligue 1 (`soccer_france_ligue_one`)
-7. 🇬🇧 Championship (`soccer_efl_champ`)
-8. 🇳🇱 Eredivisie (`soccer_netherlands_eredivisie`)
-9. 🇵🇹 Liga Portugal (`soccer_portugal_primeira_liga`)
+2. 🇬🇧 Premier League (`soccer_epl`)
+3. 🇮🇹 Serie A (`soccer_italy_serie_a`)
+4. 🇩🇪 Bundesliga (`soccer_germany_bundesliga`)
+5. 🇫🇷 Ligue 1 (`soccer_france_ligue_one`)
+6. 🇳🇱 Eredivisie (`soccer_netherlands_eredivisie`)
+7. 🇵🇹 Liga Portugal (`soccer_portugal_primeira_liga`)
+8. 🇩🇰 Dinamarca - Superliga (`soccer_denmark_superliga`)
+9. 🇳🇴 Noruega - Eliteserien (`soccer_norway_eliteserien`)
+10. 🇧🇪 Bélgica - Pro League (`soccer_belgium_first_div`)
+11. 🇹🇷 Turquía - Süper Lig (`soccer_turkey_super_league`)
+12. 🏴󠁧󠁢󠁳󠁣󠁴󠁿 Escocia - Premiership (`soccer_spl`)
+13. 🇨🇭 Suiza - Super League (`soccer_switzerland_superleague`)
+14. 🇸🇪 Suecia - Allsvenskan (`soccer_sweden_allsvenskan`)
 
 ### 2. Modelo Matemático (+EV y Kelly)
 1. **Desmargen Proporcional (Multiplicative Devigging):**
@@ -60,13 +75,16 @@ flowchart TD
 ---
 
 ### Paso 2: Prueba Local
-Ejecutar un escaneo completo de prueba:
+Ejecutar un escaneo completo de prueba o probar el monitor horario:
 ```bash
-# Probar el escaneo sin enviar a Telegram
+# Probar el escaneo de las 12:00 sin enviar a Telegram
 python3 main.py --dry-run
 
 # Probar solo una liga específica
-python3 main.py --dry-run --league soccer_spain_segunda_division
+python3 main.py --dry-run --league soccer_spain_la_liga
+
+# Probar el monitor horario de seguimiento
+python3 monitor_picks.py --dry-run
 
 # Ejecutar el escaneo real y recibir el informe en Telegram
 python3 main.py
@@ -76,14 +94,14 @@ python3 main.py
 
 ## ☁️ Automatización Gratuita en GitHub Actions
 
-Para que el bot se ejecute **totalmente solo cada mañana a las 09:00 AM** (sin necesidad de tener el ordenador encendido):
+Para que el bot se ejecute **totalmente solo todos los días de 12:00 a 21:00 horas** (sin necesidad de tener el ordenador encendido):
 
 1. **Crea un repositorio en GitHub:**
    * Entra en [github.com/new](https://github.com/new) y crea un repositorio (público o privado).
 2. **Sube el código:**
    ```bash
    git add .
-   git commit -m "Initial commit - Bot de Apuestas con Valor (+EV)"
+   git commit -m "Initial commit - Bot de Apuestas con Valor (+EV) y Monitor Horario"
    git branch -M main
    git remote add origin https://github.com/TU_USUARIO/TU_REPOSITORIO.git
    git push -u origin main
@@ -95,9 +113,9 @@ Para que el bot se ejecute **totalmente solo cada mañana a las 09:00 AM** (sin 
      * `TELEGRAM_BOT_TOKEN`: `9219638473:AAEYp5u89YbG2TjuyKeXrCJJIHvlSwqCLJo`
      * `TELEGRAM_CHAT_ID`: El ID numérico que obtuviste en el Paso 1.
 4. **¡Listo!**
-   * En la pestaña **Actions** de tu repositorio verás el flujo `Daily Betting Value Scanner (+EV)`.
-   * Se ejecutará automáticamente todos los días a las **09:00 AM CET (08:00 UTC)**.
-   * También puedes pulsar **Run workflow** en cualquier momento para lanzarlo bajo demanda.
+   * En la pestaña **Actions** de tu repositorio verás el flujo `Daily Betting Value Scanner & Hourly Tracker (+EV)`.
+   * Se ejecutará automáticamente todos los días cada hora entre las **12:00 PM y las 21:00 CET (11:00 a 20:00 UTC)**.
+   * También puedes pulsar **Run workflow** en cualquier momento para lanzarlo bajo demanda (eligiendo modo `auto`, `scan` o `monitor`).
 
 ---
 
