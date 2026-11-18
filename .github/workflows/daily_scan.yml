@@ -1,35 +1,18 @@
-name: Daily Betting Value Scanner & Hourly Tracker (+EV)
+name: Daily Betting Value Scanner (+EV)
 
 on:
   schedule:
-    # Escaneo diario principal a las 11:05 UTC (12:05 PM hora peninsular española)
-    - cron: '5 11 * * *'
-    # Monitor horario opcional de seguimiento entre las 12:00 y las 20:00 UTC (13:00 a 21:00 CET)
-    - cron: '0 12-20 * * *'
-  workflow_dispatch:
-    inputs:
-      mode:
-        description: 'Modo de ejecución'
-        required: true
-        default: 'auto'
-        type: choice
-        options:
-          - auto
-          - scan
-          - monitor
-
-permissions:
-  contents: write
+    # 11:00 UTC = 12:00 PM (mediodía en hora peninsular española)
+    - cron: '0 11 * * *'
+  workflow_dispatch: # Permite ejecutar el bot manualmente en cualquier momento desde GitHub
 
 jobs:
-  scan-and-track:
+  scan-and-notify:
     runs-on: ubuntu-latest
 
     steps:
       - name: Descargar código del repositorio
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configurar entorno de Python
         uses: actions/setup-python@v5
@@ -42,7 +25,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Ejecutar escáner o monitor de cuotas
+      - name: Ejecutar escáner de valor y enviar a Telegram
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -50,16 +33,5 @@ jobs:
           MIN_EV: '0.0'
           TARGET_BOOKMAKER: 'bet365'
           TIMEZONE: 'Europe/Madrid'
-          EXECUTION_MODE: ${{ inputs.mode || 'auto' }}
         run: |
-          python run_scheduled_job.py
-
-      - name: Persistir estado de picks activos (active_picks.json)
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add active_picks.json || true
-          if ! git diff --staged --quiet; then
-            git commit -m "chore: actualizar estado de picks activos [skip ci]"
-            git push origin main
-          fi
+          python main.py

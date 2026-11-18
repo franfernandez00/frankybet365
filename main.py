@@ -106,9 +106,12 @@ def run_pipeline(dry_run: bool = False, specific_league: str = None):
         logging.info("Modo --dry-run activo. No se envía mensaje a Telegram.")
         return
 
-    # Guardar picks activos para la monitorización horaria hasta el inicio de los partidos
-    save_picks_to_state(unique_picks)
-    logging.info(f"Picks guardados en active_picks.json para seguimiento horario.")
+    # Guardar picks activos en caso de estar disponible el módulo de seguimiento
+    try:
+        save_picks_to_state(unique_picks)
+        logging.info(f"Picks guardados en active_picks.json.")
+    except Exception as e:
+        logging.debug(f"No se pudo guardar active_picks.json: {e}")
 
     if config.TELEGRAM_BOT_TOKEN and config.TELEGRAM_CHAT_ID:
         logging.info("Enviando reporte a Telegram...")
