@@ -37,8 +37,8 @@ SHARP_BOOKMAKER = "pinnacle"
 # Casa de apuestas principal del usuario
 PRIMARY_TARGET_BOOKMAKER = os.getenv("TARGET_BOOKMAKER", "bet365").lower()
 
-# Regiones a consultar en The Odds API
-REGIONS = "eu,uk"
+# Región a consultar en The Odds API (usar solo 'eu' gasta 1 crédito por llamada en vez de 2)
+REGIONS = os.getenv("REGIONS", "eu")
 
 # Mercados
 MARKETS = "h2h"  # 1X2

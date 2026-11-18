@@ -33,5 +33,6 @@ jobs:
           MIN_EV: '0.0'
           TARGET_BOOKMAKER: 'bet365'
           TIMEZONE: 'Europe/Madrid'
+          REGIONS: 'eu'
         run: |
           python main.py
