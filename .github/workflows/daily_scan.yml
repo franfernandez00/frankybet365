@@ -2,8 +2,8 @@ name: Daily Betting Value Scanner (+EV)
 
 on:
   schedule:
-    # 11:00 UTC = 12:00 PM (mediodía en hora peninsular española)
-    - cron: '0 11 * * *'
+    # 11:03 UTC = 12:03 PM (hora peninsular española). Minuto 03 para evitar la saturación del minuto 00 en GitHub.
+    - cron: '3 11 * * *'
   workflow_dispatch: # Permite ejecutar el bot manualmente en cualquier momento desde GitHub
 
 jobs:
